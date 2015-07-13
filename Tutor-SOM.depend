@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1436815232 source:c:\users\ce-user\documents\tutor-som\main.cpp
+	<iostream>
+	<iomanip>
+	<string>
+	<vector>
+	<random>
+	<fstream>
+	"Node.h"
+
+1436813115 c:\users\ce-user\documents\tutor-som\node.h
+	<vector>
+
