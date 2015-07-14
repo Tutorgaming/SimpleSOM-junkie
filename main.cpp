@@ -4,22 +4,29 @@
 #include <vector>
 #include <random>
 #include <fstream>
+
+//Node Data Structure
 #include "Node.h"
+
+//Plot Stuff
+#include <SFML/System.hpp>
+#include <SFML/Graphics.hpp>
+
 using namespace std;
 
-int debug = 1;
+int debug = 0;
 const double LEARNING_CONST = 0.1;
-unsigned int ROW = 2;
-unsigned int COL = 2;
-int line_count = 0;
-int element_count =0;
+unsigned int ROW = 3;
+unsigned int COL = 3;
+int line_count = 9;
+int element_count =4;
 
 //CREATE DATASET
     vector<vector<double> > data;
 
+//Random DATASET
 void randomdata(){
-
-    for(int i = 0 ; i < 5 ; i++){
+    for(int i = 0 ; i < 9 ; i++){
             vector<double> temp;
         for(int j = 0 ; j < 4 ; j++ ){
             double r = ((double) rand() / (RAND_MAX));
@@ -27,7 +34,6 @@ void randomdata(){
         }
         data.push_back(temp);
     }
-
 }
 
 //READFILE FUNCTION
@@ -71,7 +77,7 @@ void readfile_ucl(string filename){
                 d = strtod(value.c_str(), NULL);
                 one_input.push_back(d);
             }
-            //DROP TAG
+            //DROP TAG(Last Attribute)
             getline ( inputfile, value , '\n');
             cout << "   VECTOR CONTENT = <" ;
             for ( vector<double>::iterator i = one_input.begin() ; i < one_input.end() ; i ++){
@@ -146,8 +152,8 @@ int main(){
 ==================================*/
     //READ INPUT DATA to vector<vector<double>> data
     string filename = "test.data";
-    readfile_ucl(filename);
-    //randomdata();
+    //readfile_ucl(filename);
+    randomdata();
     normalization();
 /*================================
    SELF ORGANIZING MAP INITIALIZATION
@@ -199,12 +205,12 @@ int main(){
             }
         }
 
-
+        if(debug){
         cout << "DATA " << endl;
         displayVector(*data_it);
         cout << endl <<"Match the node = (" << min_x << "," << min_y << ")" <<endl;
         cout << "with distance = " << min_dist <<endl <<endl;
-
+        }
         //Update the weight at Winner Node
         double MAX_radius = max(ROW, COL)/2;
         //calculate the width of the neighbourhood for this timestep
@@ -245,6 +251,40 @@ int main(){
 
     //UPDATESCREEN();
     }//End 1 Data Iteration
+
+    int sizeMonitor = 400;
+    int margin = sizeMonitor/ROW;
+    sf::RenderWindow windows(sf::VideoMode(sizeMonitor, sizeMonitor), "Weight Map");
+
+
+      while (windows.isOpen()){
+        sf::Event event;
+        while (windows.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                windows.close();
+        }
+
+        windows.clear();
+
+        //EVENTS
+        for(unsigned int i = 0 ; i < ROW ; i++){
+            for(unsigned int j = 0 ;j < COL ; j++){
+                sf::RectangleShape temp(sf::Vector2f(margin, margin));
+                temp.setPosition( j * margin , i * margin);
+                int r = 255*som_map[i][j].weights[0];
+                int g = 255*som_map[i][j].weights[1];
+                int b = 255*som_map[i][j].weights[2];
+                int a = 255*3*som_map[i][j].weights[3];
+                sf::Color attribute_color(r,g,b);
+                temp.setFillColor(attribute_color);
+                windows.draw(temp);
+                }
+            }
+        windows.display();
+    }
+
+
 
     return 0;
 }
