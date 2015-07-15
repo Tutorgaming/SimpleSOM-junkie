@@ -22,7 +22,7 @@ public:
     void AdjustWeights(const std::vector<double> &target,
                           const double LearningRate,
                           const double Influence){
-      for (int w=0; w<target.size(); ++w)
+      for (unsigned int w=0; w<target.size(); ++w)
       {
         weights[w] += LearningRate * Influence * (target[w] - weights[w]);
       }

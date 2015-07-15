@@ -11,8 +11,9 @@
 1436813115 c:\users\ce-user\documents\tutor-som\node.h
 	<vector>
 
-1436869287 source:c:\users\ce-user\documents\simplesom-junkie\main.cpp
+1436967840 source:c:\users\ce-user\documents\simplesom-junkie\main.cpp
 	<iostream>
+	<sstream>
 	<iomanip>
 	<string>
 	<vector>
@@ -22,7 +23,7 @@
 	<SFML/System.hpp>
 	<SFML/Graphics.hpp>
 
-1436813115 c:\users\ce-user\documents\simplesom-junkie\node.h
+1436967850 c:\users\ce-user\documents\simplesom-junkie\node.h
 	<vector>
 
 1436450532 c:\sfml-2.3\include\sfml\system.hpp
