@@ -18,29 +18,34 @@ using namespace std;
 /*================================
    @DEBUG
 ==================================*/
-    int debug = 0;
+    int                 debug           = 0;
     // Mouse Coordinate in detail window
-    int mouse_x =0;
-    int mouse_y = 0;
+    int                 mouse_x         = 0;
+    int                 mouse_y         = 0;
+    // Untrained Input Location
+    int                 new_i           = 0;
+    int                 new_j           = 0;
+    int                 plot_match_x    = 0;
+    int                 plot_match_y    = 0;
 /*================================
    @PARAMETERS
 ==================================*/
-    unsigned const int ROW = 40;
-    unsigned const int COL = 40;
-    unsigned const int MAX_ITERATION = 250;
-    double MAX_radius = max(ROW, COL)/2;
-    const double LEARNING_CONST = 0.1;
-    unsigned int iteration_count = 0;
-    int element_count =4;
-    int line_count = ROW*COL;
-    int sizeMonitor = 400;
-    int margin = sizeMonitor/ROW;
+    unsigned const int  ROW             = 40;
+    unsigned const int  COL             = 40;
+    unsigned const int  MAX_ITERATION   = 10;
+    double              MAX_radius      = max(ROW, COL)/2;
+    const double        LEARNING_CONST  = 0.8;
+    unsigned int        iteration_count = 0;
+    int                 element_count   = 4;
+    int                 line_count      = ROW*COL;
+    int                 sizeMonitor     = 400;
+    int                 margin          = sizeMonitor/ROW;
 /*================================
    @Data Structure
 ==================================*/
     // Self-Organzing Map
     Node som_map[ROW][COL];
-    // Plotter for Classification on Training data
+    // Plotter for Classification on Training data (R,G,B)
     int plotter[ROW][COL];
     // Dataset Vectors - will be random shuffle
     vector<vector<double> > data;
@@ -49,23 +54,49 @@ using namespace std;
 /*================================
    @FLAG
 ==================================*/
-    int finished = 0;
-    int classy = 0;
-    int num = 0;
+    int                 finished        = 0;
+    int                 classy          = 0;
+    int                 num             = 0;
+    int                 plotty          = 0;
 
 
 /*==============================================================
    @FUNCTION
 ================================================================*/
+// Display Vector<double> (Debugging Purpose)
+void displayVector(vector<double> input){
+    cout << "<" ;
+    for ( vector<double>::iterator i = input.begin() ; i < input.end() ; i ++){
+        cout << *i << ((i==input.end()-1)? "":",");
+    }
+    cout << ">";
+}
 
 // RANDOM DATASET
 void randomdata(){
+    line_count = 150;
+    element_count = 3;
     for(int i = 0 ; i < line_count ; i++){
             vector<double> temp;
-        for(int j = 0 ; j < element_count ; j++ ){
-            double r = ((double) rand() / (RAND_MAX))*255;
-            temp.push_back((int)r);
-        }
+            int r = ((double) rand() / (RAND_MAX))*3;
+        //for(int j = 0 ; j < element_count ; j++ ){
+            if(r == 0 ){
+              temp.push_back(255);
+              temp.push_back(0);
+              temp.push_back(0);
+            }else if(r == 1 ){
+              temp.push_back(0);
+              temp.push_back(255);
+              temp.push_back(0);
+            }else if(r == 2 ){
+              temp.push_back(0);
+              temp.push_back(0);
+              temp.push_back(255);
+            }
+
+        //}
+        displayVector(temp);
+        cout <<endl;
         data.push_back(temp);
         real.push_back(temp);
     }
@@ -160,21 +191,18 @@ void normalization(){
     }
 }
 
-// Display Vector<double> (Debugging Purpose)
-void displayVector(vector<double> input){
-    cout << "<" ;
-    for ( vector<double>::iterator i = input.begin() ; i < input.end() ; i ++){
-        cout << *i << ((i==input.end()-1)? "":",");
-    }
-    cout << ">";
-}
-
 //Find Euclidean Distance
 double euclidean_distance(vector<double> input1 , vector<double> input2){
     double distance=0;
     for(int i = 0 ; i < element_count ; i++ ){
         distance  += (input1[i]-input2[i]) *  (input1[i]-input2[i]) ;
     }
+    return sqrt(distance);
+}
+
+double euclidean_distance(int x1,int y1 , int x2, int y2){
+    double distance=0;
+    distance = ((x1-x2)*(x1-x2)) + ((y1-y2)*(y1-y2));
     return sqrt(distance);
 }
 
@@ -259,10 +287,17 @@ void drawthis(){
             for(unsigned int j = 0 ;j < COL ; j++){
                 sf::RectangleShape temp(sf::Vector2f(margin, margin));
                 temp.setPosition( j * margin , i * margin);
+                //RGBA
                 int r = 255*som_map[i][j].weights[0];
                 int g = 255*som_map[i][j].weights[1];
                 int b = 255*som_map[i][j].weights[2];
                 //int a = 255*som_map[i][j].weights[3];
+
+//                //CMYK
+//                int r = 255*(1-som_map[i][j].weights[0])*(1-som_map[i][j].weights[3]);
+//                int g = 255*(1-som_map[i][j].weights[1])*(1-som_map[i][j].weights[3]);
+//                int b = 255*(1-som_map[i][j].weights[2])*(1-som_map[i][j].weights[3]);
+
                 sf::Color attribute_color(r,g,b);
                 temp.setFillColor(attribute_color);
                 anotherWindow.draw(temp);
@@ -281,7 +316,7 @@ void drawUmatrix(){
                 UWindow.close();
         }
         double average=0;
-        double TOP=0,BOTTOM=0,LEFT=0,RIGHT=0;
+        double TOP=0,BOTTOM=0,LEFT=0,RIGHT=0,LEFTTOP=0,RIGHTTOP=0,LEFTBOTTOM=0,RIGHTBOTTOM=0;
         for(unsigned int i = 0 ; i < ROW ; i++){
                     for(unsigned int j = 0 ;j < COL ; j++){
                     //CALCULATE Average Distance Between Neighborhood ( CITY TOPOLOGY )
@@ -304,17 +339,27 @@ void drawUmatrix(){
                         RIGHT   = euclidean_distance( som_map[i][j].weights , som_map[i][j+1].weights  );
                         divider++;
                     }
+//                    if(j>0 && j < COL-2 && i > 0 && i < ROW-2){
+//                        LEFTTOP     = euclidean_distance( som_map[i][j].weights , som_map[i-1][j-1].weights  );
+//                        LEFTBOTTOM  = euclidean_distance( som_map[i][j].weights , som_map[i+1][j-1].weights  );
+//                        RIGHTTOP    = euclidean_distance( som_map[i][j].weights , som_map[i-1][j+1].weights  );
+//                        RIGHTBOTTOM = euclidean_distance( som_map[i][j].weights , som_map[i+1][j+1].weights  );
+//                        divider +=4;
+//                    }
 
-                        average = TOP + BOTTOM + LEFT + RIGHT ;
+                        average = TOP + BOTTOM + LEFT + RIGHT + RIGHTTOP + RIGHTBOTTOM + LEFTTOP + LEFTBOTTOM ;
                         average = average / divider;
 
                         sf::RectangleShape temp(sf::Vector2f(margin, margin));
                         temp.setPosition( j * margin , i * margin);
                         int r = 255-255*average;
-                        int g = 255-255*average;
-                        int b = 255-255*average;
                         //int a = 255-255*average;
-                        sf::Color attribute_color(r,g,b);
+                        sf::Color attribute_color(r,r,r);
+                        if(r < 230){
+                            attribute_color.r = 0;
+                            attribute_color.g = 0;
+                            attribute_color.b = 0;
+                        }
                         temp.setFillColor(attribute_color);
                         UWindow.draw(temp);
                         }
@@ -332,6 +377,23 @@ void drawUmatrix(){
                         UWindow.draw(tempa);
                     }
                 }
+            }
+
+            if(plotty){
+                sf::CircleShape circle;
+                sf::CircleShape selected;
+                selected.setRadius(margin/3);
+                circle.setRadius(margin/2);
+                circle.setOutlineColor(sf::Color::Black);
+                circle.setOutlineThickness(2);
+                 sf::Color attribute_color(((plotter[plot_match_y][plot_match_x]==1)? 255:0),((plotter[plot_match_y][plot_match_x]==2)? 255:0)
+                                           ,((plotter[plot_match_y][plot_match_x]==3)? 255:0));
+                circle.setFillColor(attribute_color);
+                circle.setPosition(new_j*margin,new_i*margin);
+                selected.setFillColor(sf::Color::Yellow);
+                selected.setPosition(plot_match_x*margin+margin/4, plot_match_y*margin+margin/4);
+                UWindow.draw(circle);
+                UWindow.draw(selected);
             }
         UWindow.display();
     }
@@ -353,7 +415,6 @@ pair<int,int> findWinner(vector<double> input_weight){
         }
     }
     return make_pair(x,y);
-
 }
 
 
@@ -414,6 +475,56 @@ void detail(){
 
 }
 
+
+void showDistance(){
+    sf::RenderWindow showdistance(sf::VideoMode(400 , sizeMonitor), "DETAIL");
+    while (showdistance.isOpen()){
+        sf::Event event;
+        while (showdistance.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                showdistance.close();
+        }
+        //Clear Window before drawing
+
+        for(unsigned int i = 0 ; i < ROW ; i++){
+            for(unsigned int j = 0 ;j < COL ; j++){
+                sf::RectangleShape temp(sf::Vector2f(margin, margin));
+                temp.setPosition( j * margin , i * margin);
+                //RGBA
+                double distance = euclidean_distance(som_map[mouse_y][mouse_x].weights,som_map[i][j].weights);
+                int r = 255-255*distance;
+                sf::Color attribute_color(r,r,r);
+                temp.setFillColor(attribute_color);
+                showdistance.draw(temp);
+            }
+        }
+        showdistance.display();
+    }
+}
+
+
+pair<int,int> findClass(){
+    int win_i=0,win_j=0;
+    double distance = 10000;
+    for(int i = 0 ; i < ROW ; i++ ){
+        for( int j = 0 ; j < COL ; j ++){
+            if(plotter[i][j] != 0 ){
+                double dist = euclidean_distance(i,j,new_i,new_j);
+                if( dist < distance ){
+                   distance = dist;
+                   win_j = j;
+                   win_i = i;
+                }
+            }
+        }
+
+    }
+    return make_pair(win_i,win_j);
+}
+
+
+
 /*==============================================================
    @MAIN
 ================================================================*/
@@ -426,9 +537,10 @@ int main(){
 ==================================*/
     //READ INPUT DATA to vector<vector<double>> data
     string filename = "iris.data";
-    readfile_ucl(filename);
+    readfile_ucl(filename); //IRIS DATA
+    //random by current time (for rand(); )
     srand(time(0));
-    //randomdata();
+    //randomdata(); //RGB 3 Element Data
     normalization();
 
     //U-Matrix
@@ -473,7 +585,6 @@ int main(){
     cout << "TRAINING PROCESS " <<endl;
     cout << "==================="<<endl;
 
-
         vector<vector<double>>::iterator data_it;
         // FOR EVERY EPOCH ( Training round )
         for(;iteration_count < MAX_ITERATION; ++iteration_count){
@@ -515,6 +626,48 @@ int main(){
      // Set Class Drawing Flag (Draw on U-Matrix Window)
      // will draw the input data with the color R,G,B
      classy = 1;
+
+
+    cout << "Example Data real[3] = " ;
+    displayVector(real[3]);
+    cout << endl;
+
+    cout << "Example Data real[53] = " ;
+    displayVector(real[53]);
+    cout << endl;
+
+    cout << "Example Data real[103] = " ;
+    displayVector(real[103]);
+    cout << endl;
+
+     // Receive New Input test
+     double buff;
+     // Drawing Weight
+        sf::Thread showdistance(&showDistance);
+        showdistance.launch();
+
+     while(1){
+        vector<double> test_input;
+        cout << "Enter Data For Test input : "<<endl;
+         for(int i = 0 ; i < element_count ; i++){
+            cout << "test_input["<<i<<"] = " ;
+            cin >> buff;
+            test_input.push_back(buff);
+         }
+
+        pair<int,int> result;
+        result = findWinner(test_input);
+        new_i = result.first;
+        new_j = result.second;
+        cout << new_j << ","<<new_i << endl;
+        result = findClass();
+        plot_match_x = result.second; //J
+        plot_match_y = result.first; //I
+        plotty = 1;
+
+    }
+
+
 
     cout << "==================="<<endl;
     cout <<endl << "CLOSE THREAD WINDOW TO EXIT" << "\r";
