@@ -16,9 +16,6 @@ public:
         y_pos = 0;
     }
 
-//    *Node getnode(int x , int y){
-//        return
-//    }
     void AdjustWeights(const std::vector<double> &target,
                           const double LearningRate,
                           const double Influence){

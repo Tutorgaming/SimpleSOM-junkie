@@ -11,19 +11,21 @@
 1436813115 c:\users\ce-user\documents\tutor-som\node.h
 	<vector>
 
-1437057552 source:c:\users\ce-user\documents\simplesom-junkie\main.cpp
+1437140805 source:c:\users\ce-user\documents\simplesom-junkie\main.cpp
 	<iostream>
 	<sstream>
 	<iomanip>
 	<string>
 	<vector>
+	<set>
+	<map>
 	<random>
 	<fstream>
 	"Node.h"
 	<SFML/System.hpp>
 	<SFML/Graphics.hpp>
 
-1436967850 c:\users\ce-user\documents\simplesom-junkie\node.h
+1437134673 c:\users\ce-user\documents\simplesom-junkie\node.h
 	<vector>
 
 1436450532 c:\sfml-2.3\include\sfml\system.hpp
