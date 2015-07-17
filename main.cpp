@@ -67,8 +67,6 @@ using namespace std;
     int                 classy          = 0;
     int                 num             = 0;
     int                 plotty          = 0;
-
-
 /*==============================================================
    @FUNCTION
 ================================================================*/
@@ -147,7 +145,6 @@ void readfile_ucl(string filename){
     }
     inputfile.close();
     inputfile.clear();
-
     //Input Gathering From File
     inputfile.open(filename);
     if (inputfile.is_open()){
@@ -245,7 +242,6 @@ void training(vector<double> data_it , Node som_map[][COL]){
 
     //After we got the winner node ( Minimum Distance )
     //Update the weight at Winner Node
-
         double m_dTimeConstant = MAX_ITERATION/log(MAX_radius);
         //calculate the width of the neighborhood for this timestep
         double m_dNeighbourhoodRadius = MAX_radius * exp(-(double)iteration_count/m_dTimeConstant);
@@ -269,7 +265,6 @@ void training(vector<double> data_it , Node som_map[][COL]){
              }
             }
         }
-
        //REDUCE THE LEARNING RATE
          m_dLearningRate = LEARNING_CONST * exp(-(double)iteration_count/MAX_ITERATION);
 }
@@ -486,16 +481,13 @@ void detail(){
         }
         detailWindow.display();
     }
-
 }
-
 
 void showDistance(){
     sf::RenderWindow showdistance(sf::VideoMode(400 , sizeMonitor), "DETAIL");
     while (showdistance.isOpen()){
         sf::Event event;
-        while (showdistance.pollEvent(event))
-        {
+        while (showdistance.pollEvent(event)){
             if (event.type == sf::Event::Closed)
                 showdistance.close();
         }
@@ -632,19 +624,6 @@ int main(){
      // will draw the input data with the color R,G,B
      classy = 1;
 
-
-    cout << "Example Data real[0] = " ;
-    displayVector(real[0]);
-    cout << endl;
-
-    cout << "Example Data real[50] = " ;
-    displayVector(real[50]);
-    cout << endl;
-
-    cout << "Example Data real[100] = " ;
-    displayVector(real[100]);
-    cout << endl;
-
      // Receive New Input test
      double buff;
      // Drawing Weight
@@ -670,9 +649,7 @@ int main(){
         plot_match_y = result.first; //I
 
         plotty = 1;
-
     }
-
     cout << "==================="<<endl;
     cout <<endl << "CLOSE THREAD WINDOW TO EXIT" << "\r";
     return 0;

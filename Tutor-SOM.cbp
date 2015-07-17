@@ -15,8 +15,6 @@
 					<Add option="-std=c++11" />
 					<Add option="-g" />
 					<Add option="-DSFML_STATIC" />
-					<Add directory="C:/knnl/include" />
-					<Add directory="c:/boost_1_58_0" />
 					<Add directory="c:/SFML-2.3/include" />
 				</Compiler>
 				<Linker>
