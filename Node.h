@@ -3,17 +3,11 @@ class Node{
 
 public:
     std::vector<double> weights;
-    int x_pos;
-    int y_pos;
-    Node(std::vector<double> weight,int x,int y){
+    Node(std::vector<double> weight){
         weights = weight;
-        x_pos = x;
-        y_pos = y;
     }
 
     Node(){
-        x_pos = 0;
-        y_pos = 0;
     }
 
     void AdjustWeights(const std::vector<double> &target,

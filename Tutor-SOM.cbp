@@ -42,6 +42,8 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="Node.h" />
+		<Unit filename="Serial.cpp" />
+		<Unit filename="Serial.h" />
 		<Unit filename="Som.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>

@@ -11,6 +11,8 @@
 //Node Data Structure
 #include "Node.h"
 
+//Windows Serial Stuff
+#include "Serial.h"
 //Plot Stuff
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
@@ -32,17 +34,19 @@ using namespace std;
 /*================================
    @PARAMETERS
 ==================================*/
-    unsigned const int  ROW             = 20;
-    unsigned const int  COL             = 20;
-    unsigned const int  MAX_ITERATION   = 80;
+    unsigned const int  ROW             = 15;
+    unsigned const int  COL             = 15;
+    unsigned const int  MAX_ITERATION   = 250;
     double              MAX_radius      = max(ROW, COL)/2;
-    const double        LEARNING_CONST  = 0.5;
+    const double        LEARNING_CONST  = 0.1;
     unsigned int        iteration_count = 0;
     int                 element_count   = 4;
     int                 class_count     = 3; // IRIS DATASET = 3
     int                 line_count      = ROW*COL;
     int                 sizeMonitor     = 400;
     int                 margin          = sizeMonitor/ROW;
+    int                 serial_flag     = 1; //Enable Serial
+    CSerial             serial;         //Serial interface
 /*================================
    @Data Structure
 ==================================*/
@@ -95,7 +99,6 @@ void randomdata(){
     for(int i = 0 ; i < line_count ; i++){
             vector<double> temp;
             int r = ((double) rand() / (RAND_MAX))*3;
-        //for(int j = 0 ; j < element_count ; j++ ){
             if(r == 0 ){
               temp.push_back(255);
               temp.push_back(0);
@@ -117,7 +120,7 @@ void randomdata(){
 }
 
 // READFILE FUNCTION
-// INPUT FORMAT    [data1,data2,data3,...,class]
+// INPUT FORMAT    3
 void readfile_ucl(string filename){
     line_count = -1;
     element_count = 0;
@@ -233,8 +236,8 @@ void training(vector<double> data_it , Node som_map[][COL]){
         for(unsigned int j = 0 ; j < COL ; j++){
              double distance = euclidean_distance(data_it , som_map[i][j].weights);
              if(distance < min_dist ){ // MINIMUM - Euclidean Distance
-                min_x = som_map[i][j].x_pos;
-                min_y = som_map[i][j].y_pos;
+                min_x = i;
+                min_y = j;
                 min_dist = distance;
              }
         }
@@ -250,10 +253,10 @@ void training(vector<double> data_it , Node som_map[][COL]){
         for(unsigned int i = 0 ; i < ROW ; i++){
             for(unsigned int j = 0 ; j < COL ; j++){
              //Distance from Winner Node
-             double DistToNodeSq = (min_x-som_map[i][j].x_pos) *
-                                   (min_x-som_map[i][j].x_pos) +
-                                   (min_y-som_map[i][j].y_pos) *
-                                   (min_y-som_map[i][j].y_pos);
+             double DistToNodeSq = (min_x-i) *
+                                   (min_x-i) +
+                                   (min_y-j) *
+                                   (min_y-j);
 
             // Radius from Center of Winning Node
              double WidthSq = m_dNeighbourhoodRadius * m_dNeighbourhoodRadius;
@@ -277,8 +280,8 @@ void drawthis(){
             if (event.type == sf::Event::Closed)
                 anotherWindow.close();
         }
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && finished){
-             sf::Vector2i position = sf::Mouse::getPosition(anotherWindow);
+        sf::Vector2i position = sf::Mouse::getPosition(anotherWindow);
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && finished && position.x >=0 && position.x <=anotherWindow.getSize().x && position.x >=0 && position.y <=anotherWindow.getSize().y ){
              if((position.x/margin >= 0 || position.x/margin < COL-1 )&& (position.y/margin >= 0 || position.y/margin < ROW-1)){
                 if(mouse_x != 40 || mouse_y != 40){
                     mouse_x = position.x / margin ;
@@ -526,12 +529,91 @@ pair<int,int> findClass(){
     return make_pair(win_i,win_j);
 }
 
+//Serial Function
+
+int numDigits(int number){
+    int digits = 0;
+    if (number < 0) digits = 1;
+    while (number) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
+void serial_sent_int(int input){
+    //Find The Amount Of Digits
+        int digits = numDigits(input);
+        if(input == 0) digits = 1;
+    //Convert to CONST CHAR * For transfer
+        stringstream temp_str;
+        temp_str << (input);
+        string str = temp_str.str();
+        const char * tempChar = str.c_str();
+    //Transfer via Serial
+        cout << "[Serial] Sending (integer) : " << tempChar << "\r";
+        serial.SendData(tempChar,digits);
+    //Ending Seperator
+        serial.SendData(",",1);
+        Sleep(40);
+}
+string convertDouble(double value) {
+  std::ostringstream o;
+  if (!(o << value))
+    return "";
+  return o.str();
+}
+
+
+void serial_sent_double(double input){
+    //Find the Amount of Integer
+    int int_digits = numDigits((int)input); //Cast to int then find
+    //convert to CONST CHAR * with fixing 6 precision of decimal
+    char tempChar[50];
+    int digits = int_digits + 1 + 6;
+    snprintf(tempChar,50,"%f",input);
+    //Transfer via Serial
+        cout << "[Serial] Sending (double ) : " << tempChar << "\r";
+        serial.SendData(tempChar,digits);
+    //Ending Seperator
+        serial.SendData(",",1);
+        Sleep(40);
+}
+
+void sentMapToMSP(){
+    cout << "[Serial] Opening Serial Port Comm. . . . " <<endl;
+        if (serial.Open(4, 9600)){
+            cout << "[Serial] Port opened successfully" << endl;
+        }else{
+            cout << "[Serial] Failed to open port!" << endl;
+            return ;
+        }
+        // send SOM_MAP to MSP 430
+        for(int i = 0 ; i < ROW ; i++ ){
+            for(int j = 0 ; j < COL ; j++ ){
+                for(int e = 0 ; e < element_count ; e++){
+                    cout << "["<<i<<"]["<<j<<"]["<<e<<"]";
+                    serial_sent_double(som_map[i][j].weights[e]);
+                }
+            }
+        }
+
+        for(int i = 0 ; i < ROW ; i++ ){
+            for(int j = 0 ; j < COL ; j++ ){
+                    cout << "["<<i<<"]["<<j<<"]";
+                    serial_sent_int(plotter[i][j]);
+            }
+        }
+
+
+}
 
 /*==============================================================
    @MAIN
 ================================================================*/
 int main(){
     // Set display precision format on console
+    vector<double> maland(150);
+    cout << sizeof(maland[0]) * maland.size() <<endl;
     cout << setprecision(5);
     cout << fixed;
 /*================================
@@ -563,10 +645,11 @@ int main(){
                     weights.push_back(r);
                     if(debug)cout << r <<endl;
                 }
-                som_map[i][j] = Node(weights,i,j);
+                som_map[i][j] = Node(weights);
                 if(debug)cout <<endl;
             }
         }
+
     // Consumer Drawing Thread   SHARED DATA = SOM_MAP Weight
     // Drawing Weight
         sf::Thread thread(&drawthis);
@@ -620,6 +703,11 @@ int main(){
             pair<int,int> winner = findWinner(real[i]);
                 plotter[winner.first][winner.second] = class_number[real_class[i]];
      }
+
+    //SENDING THINGS TO SERIAL
+    cin.ignore();
+     if(serial_flag)sentMapToMSP();
+
      // Set Class Drawing Flag (Draw on U-Matrix Window)
      // will draw the input data with the color R,G,B
      classy = 1;
@@ -630,26 +718,34 @@ int main(){
         sf::Thread showdistance(&showDistance);
         showdistance.launch();
 
-     while(1){
-        vector<double> test_input;
-        cout << "Enter Data For Test input : "<<endl;
-         for(int i = 0 ; i < element_count ; i++){
-            cout << "test_input["<<i<<"] = " ;
-            cin >> buff;
-            test_input.push_back(buff);
-         }
+    if(classy){
+        while(1){
+            vector<double> test_input;
+            cout << "Enter Data For Test input : "<<endl;
+             for(int i = 0 ; i < element_count ; i++){
+                cout << "test_input["<<i<<"] = " ;
+                cin >> buff;
+                test_input.push_back(buff);
+                serial_sent_double(buff);
+                cout <<endl;
+             }
 
-        pair<int,int> result;
-        result = findWinner(test_input);
-        new_i = result.first;
-        new_j = result.second;
-        cout << new_j << ","<<new_i << endl;
-        result = findClass(); // Find Reference From Training Data
-        plot_match_x = result.second; //J
-        plot_match_y = result.first; //I
-
-        plotty = 1;
+            pair<int,int> result;
+            result = findWinner(test_input);
+            new_i = result.first;
+            new_j = result.second;
+            cout << new_j << ","<<new_i << endl;
+            result = findClass(); // Find Reference From Training Data
+            plot_match_x = result.second; //J
+            plot_match_y = result.first; //I
+            plotty = 1;
+        }
     }
+
+
+
+
+
     cout << "==================="<<endl;
     cout <<endl << "CLOSE THREAD WINDOW TO EXIT" << "\r";
     return 0;

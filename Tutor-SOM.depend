@@ -11,7 +11,7 @@
 1436813115 c:\users\ce-user\documents\tutor-som\node.h
 	<vector>
 
-1437140805 source:c:\users\ce-user\documents\simplesom-junkie\main.cpp
+1437482419 source:c:\users\ce-user\documents\simplesom-junkie\main.cpp
 	<iostream>
 	<sstream>
 	<iomanip>
@@ -22,10 +22,11 @@
 	<random>
 	<fstream>
 	"Node.h"
+	"Serial.h"
 	<SFML/System.hpp>
 	<SFML/Graphics.hpp>
 
-1437134673 c:\users\ce-user\documents\simplesom-junkie\node.h
+1437388222 c:\users\ce-user\documents\simplesom-junkie\node.h
 	<vector>
 
 1436450532 c:\sfml-2.3\include\sfml\system.hpp
@@ -405,4 +406,10 @@
 	<SFML/System/String.hpp>
 	<string>
 	<vector>
+
+1434453722 c:\users\ce-user\documents\simplesom-junkie\serial.h
+	<windows.h>
+
+1434461052 source:c:\users\ce-user\documents\simplesom-junkie\serial.cpp
+	"Serial.h"
 
