@@ -16,7 +16,8 @@ Third-year Computer Engineering student , Chulalongkorn University
 1. Windows 7 (According to serial transmission Library)
 2. SFML Library - Draw Visualization 
   - [SFML](http://www.sfml-dev.org/download.php) -Please Select 32-Bit - code:block set path to = C:\SFML-2.3
-3. Code::Block  - Project files formatted for code:Block
+3. CODE::BLOCK (IDE for C++/C)  - Project files formatted for code:Block
+  - [CODE:BLOCK](http://www.codeblocks.org/downloads)
 
 **Microcontroller Side**
 
@@ -24,8 +25,6 @@ Third-year Computer Engineering student , Chulalongkorn University
 2. MSP430F5529 Board (Texas instrument)
 3. Code Composer Studio (Texas instument modded version of Eclipse) 
 
-**CODE:BLOCK IDE (C++/C)**
-1. [CODE:BLOCK](http://www.codeblocks.org/downloads)
 
 ### Setting it up
 
