@@ -7,6 +7,7 @@
 #include <map>
 #include <random>
 #include <fstream>
+#include <math.h>
 
 //Node Data Structure
 #include "Node.h"
@@ -36,7 +37,7 @@ using namespace std;
 ==================================*/
     unsigned const int  ROW             = 15;
     unsigned const int  COL             = 15;
-    unsigned const int  MAX_ITERATION   = 250;
+    unsigned const int  MAX_ITERATION   = 25;
     double              MAX_radius      = max(ROW, COL)/2;
     const double        LEARNING_CONST  = 0.1;
     unsigned int        iteration_count = 0;
@@ -44,8 +45,7 @@ using namespace std;
     int                 class_count     = 3; // IRIS DATASET = 3
     int                 line_count      = ROW*COL;
     int                 sizeMonitor     = 400;
-    int                 margin          = sizeMonitor/ROW;
-    int                 serial_flag     = 1; //Enable Serial
+    int                 margin          = ceil((double)sizeMonitor/(double)ROW);
     CSerial             serial;         //Serial interface
 /*================================
    @Data Structure
@@ -67,6 +67,7 @@ using namespace std;
 /*================================
    @FLAG
 ==================================*/
+    int                 serial_flag     = 1; //Enable Serial
     int                 finished        = 0;
     int                 classy          = 0;
     int                 num             = 0;
@@ -245,9 +246,9 @@ void training(vector<double> data_it , Node som_map[][COL]){
 
     //After we got the winner node ( Minimum Distance )
     //Update the weight at Winner Node
-        double m_dTimeConstant = MAX_ITERATION/log(MAX_radius);
-        //calculate the width of the neighborhood for this timestep
-        double m_dNeighbourhoodRadius = MAX_radius * exp(-(double)iteration_count/m_dTimeConstant);
+    double m_dTimeConstant = MAX_ITERATION/log(MAX_radius);
+    //calculate the width of the neighborhood for this time step
+    double m_dNeighbourhoodRadius = MAX_radius * exp(-(double)iteration_count/m_dTimeConstant);
 
         //ITERATE THROUGH EVERYNODE TO FIND CORRESPONDENT NEIGHBOR
         for(unsigned int i = 0 ; i < ROW ; i++){
@@ -272,24 +273,20 @@ void training(vector<double> data_it , Node som_map[][COL]){
          m_dLearningRate = LEARNING_CONST * exp(-(double)iteration_count/MAX_ITERATION);
 }
 
-void drawthis(){
-    sf::RenderWindow anotherWindow(sf::VideoMode(400 , sizeMonitor), "Weight Plot Window");
+void drawWeightWindow(){
+    sf::RenderWindow anotherWindow(sf::VideoMode(400 , sizeMonitor), "Weight Plot Window",sf::Style::Titlebar);
     while (anotherWindow.isOpen()){
         sf::Event event;
         while (anotherWindow.pollEvent(event)){ //CLOSE BUTTON POLL
             if (event.type == sf::Event::Closed)
                 anotherWindow.close();
         }
+
         sf::Vector2i position = sf::Mouse::getPosition(anotherWindow);
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && finished && position.x >=0 && position.x <=anotherWindow.getSize().x && position.x >=0 && position.y <=anotherWindow.getSize().y ){
              if((position.x/margin >= 0 || position.x/margin < COL-1 )&& (position.y/margin >= 0 || position.y/margin < ROW-1)){
-                if(mouse_x != 40 || mouse_y != 40){
                     mouse_x = position.x / margin ;
                     mouse_y = position.y / margin ;
-                }else{
-                    mouse_x = 0;
-                    mouse_y = 0;
-                }
              }else{
                 mouse_x = 0;
                 mouse_y = 0;
@@ -377,7 +374,7 @@ void drawUmatrix(){
                     }
 
             //AFTER TRAINING IS COMPLETE classy will be set to 1
-            //in order to plot training data
+            //in order to plot trained data
             if(classy){
                 for(unsigned int i = 0 ; i <ROW ; i++){
                     for(unsigned int j = 0 ; j < COL ; j++){
@@ -430,7 +427,7 @@ pair<int,int> findWinner(vector<double> input_weight){
 }
 
 
-string inttostring(double x){
+string number_tostring(double x){
     std::stringstream ss;
     ss << x;
     std::string str = ss.str();
@@ -441,8 +438,7 @@ void detail(){
     sf::RenderWindow detailWindow(sf::VideoMode(400 , sizeMonitor), "DETAIL");
     while (detailWindow.isOpen()){
         sf::Event event;
-        while (detailWindow.pollEvent(event))
-        {
+        while (detailWindow.pollEvent(event)){
             if (event.type == sf::Event::Closed)
                 detailWindow.close();
         }
@@ -456,15 +452,14 @@ void detail(){
         text.setFont(font);
         //Select Pixel According to mouse position and cell boundary
         if(mouse_y >=0 && mouse_y <=ROW -1 && mouse_x >=0 && mouse_x <= COL-1){
-            string a0 = inttostring(som_map[mouse_y][mouse_x].weights[0]);
-            string a1 = inttostring(som_map[mouse_y][mouse_x].weights[1]);
-            string a2 = inttostring(som_map[mouse_y][mouse_x].weights[2]);
-            string a3 = inttostring(som_map[mouse_y][mouse_x].weights[3]);
+            string a0 = number_tostring(som_map[mouse_y][mouse_x].weights[0]);
+            string a1 = number_tostring(som_map[mouse_y][mouse_x].weights[1]);
+            string a2 = number_tostring(som_map[mouse_y][mouse_x].weights[2]);
+            string a3 = number_tostring(som_map[mouse_y][mouse_x].weights[3]);
 
-            string display = "MOUSE POSITION \n X = "+ inttostring(mouse_x) +"\n Y = "+ inttostring(mouse_y)+"\n"+
+            string display = "MOUSE POSITION \n X = "+ number_tostring(mouse_x) +"\n Y = "+ number_tostring(mouse_y)+"\n"+
             " WEIGHT  : " + "\n" + a0 + "\n" + a1 + "\n"+ a2+"\n" + a3 + "\n";
 
-            //cout << "Distance between input and selected node = " << euclidean_distance(real[num],som_map[mouse_y][mouse_x].weights) << "\r";
             text.setString(display);
             text.setCharacterSize(24); // in pixels, not points!
             text.setColor(sf::Color::White);
@@ -486,31 +481,37 @@ void detail(){
     }
 }
 
+//Show Distance between selected node and all the others
 void showDistance(){
-    sf::RenderWindow showdistance(sf::VideoMode(400 , sizeMonitor), "DETAIL");
+    sf::RenderWindow showdistance(sf::VideoMode(400 , sizeMonitor), "Distance Difference between selected node and Networks");
     while (showdistance.isOpen()){
         sf::Event event;
         while (showdistance.pollEvent(event)){
             if (event.type == sf::Event::Closed)
                 showdistance.close();
         }
-        for(unsigned int i = 0 ; i < ROW ; i++){
-            for(unsigned int j = 0 ;j < COL ; j++){
-                sf::RectangleShape temp(sf::Vector2f(margin, margin));
-                temp.setPosition( j * margin , i * margin);
-                double distance = euclidean_distance(som_map[mouse_y][mouse_x].weights,som_map[i][j].weights);
-                //GreyScale Plot
-                int r = 255-255*distance;
-                sf::Color attribute_color(r,r,r);
-                temp.setFillColor(attribute_color);
-                showdistance.draw(temp);
+        //Clear Window before drawing
+        showdistance.clear();
+        if(mouse_y >=0 && mouse_y <=ROW -1 && mouse_x >=0 && mouse_x <= COL-1){
+            for(unsigned int i = 0 ; i < ROW ; i++){
+                for(unsigned int j = 0 ;j < COL ; j++){
+                    sf::RectangleShape temp(sf::Vector2f(margin, margin));
+                    temp.setPosition( j * margin , i * margin);
+                    double distance = euclidean_distance(som_map[mouse_y][mouse_x].weights,som_map[i][j].weights);
+                    //GreyScale Plot
+                    int r = 255-255*distance;
+                    sf::Color attribute_color(r,r,r);
+                    temp.setFillColor(attribute_color);
+                    showdistance.draw(temp);
+                }
             }
         }
-        showdistance.display();
+         showdistance.display();
     }
 }
 
-
+//Find the nearest class in the trained data
+// in order to verify input's class
 pair<int,int> findClass(){
     int win_i=0,win_j=0;
     double distance = 10000;
@@ -530,7 +531,6 @@ pair<int,int> findClass(){
 }
 
 //Serial Function
-
 int numDigits(int number){
     int digits = 0;
     if (number < 0) digits = 1;
@@ -541,6 +541,7 @@ int numDigits(int number){
     return digits;
 }
 void serial_sent_int(int input){
+    cout << "                                                     " << "\r";
     //Find The Amount Of Digits
         int digits = numDigits(input);
         if(input == 0) digits = 1;
@@ -565,6 +566,7 @@ string convertDouble(double value) {
 
 
 void serial_sent_double(double input){
+    cout << "                                                     " << "\r";
     //Find the Amount of Integer
     int int_digits = numDigits((int)input); //Cast to int then find
     //convert to CONST CHAR * with fixing 6 precision of decimal
@@ -612,8 +614,6 @@ void sentMapToMSP(){
 ================================================================*/
 int main(){
     // Set display precision format on console
-    vector<double> maland(150);
-    cout << sizeof(maland[0]) * maland.size() <<endl;
     cout << setprecision(5);
     cout << fixed;
 /*================================
@@ -624,8 +624,8 @@ int main(){
     readfile_ucl(filename); //IRIS DATA
     //random by current time (for rand(); )
     srand(time(0));
-    //randomdata(); //RGB 3 Element Data
-    normalization();
+
+    normalization(); //randomdata(); //RGB 3 Element Data
     //Compute the class name to numerical format ( Visualization Purpose )
     computeClassTag();
     //U-Matrix
@@ -652,7 +652,7 @@ int main(){
 
     // Consumer Drawing Thread   SHARED DATA = SOM_MAP Weight
     // Drawing Weight
-        sf::Thread thread(&drawthis);
+        sf::Thread thread(&drawWeightWindow);
         thread.launch();
 
     cout << "PRESS TO START ! ";
@@ -668,6 +668,7 @@ int main(){
    @VISUALIZATION
    - Class Visualization And U-Matrix are running on another thread.
 ==================================*/
+    cout << "==================="<<endl;
     cout << "TRAINING PROCESS " <<endl;
     cout << "==================="<<endl;
 
@@ -691,11 +692,14 @@ int main(){
    - Input 4 Data and find the minimum euclidian distance
    between input and weight vector
 ==================================*/
-
-    cout <<endl <<endl;
+    cout << "==================="<<endl;
+    cout <<endl;
     // Cursor Detail Window
     sf::Thread detailer(&detail);
     detailer.launch();
+    // Drawing Weight
+    sf::Thread showdistance(&showDistance);
+    showdistance.launch();
 
     //Classification on Training data [Using vector<vector<double>> real]
     // which is the data not shuffled
@@ -705,30 +709,32 @@ int main(){
      }
 
     //SENDING THINGS TO SERIAL
-    cin.ignore();
-     if(serial_flag)sentMapToMSP();
+    if(serial_flag){
+    cout << "Send Data to serial : Press Enter to continue."<<endl;
+    cout << "==================="<<endl;
+        cin.ignore();
+        sentMapToMSP();
+    }else{
+    cout << "==================="<<endl;
+    }
 
      // Set Class Drawing Flag (Draw on U-Matrix Window)
      // will draw the input data with the color R,G,B
+     // drawing according to "plotter" array
      classy = 1;
-
      // Receive New Input test
      double buff;
-     // Drawing Weight
-        sf::Thread showdistance(&showDistance);
-        showdistance.launch();
-
-    if(classy){
+     if(classy){
         while(1){
             vector<double> test_input;
             cout << "Enter Data For Test input : "<<endl;
-             for(int i = 0 ; i < element_count ; i++){
+            for(int i = 0 ; i < element_count ; i++){
                 cout << "test_input["<<i<<"] = " ;
                 cin >> buff;
                 test_input.push_back(buff);
-                serial_sent_double(buff);
+                serial_sent_double(buff); //SEND VALUE TO MICROCONTROLLER
                 cout <<endl;
-             }
+            }
 
             pair<int,int> result;
             result = findWinner(test_input);
@@ -741,11 +747,6 @@ int main(){
             plotty = 1;
         }
     }
-
-
-
-
-
     cout << "==================="<<endl;
     cout <<endl << "CLOSE THREAD WINDOW TO EXIT" << "\r";
     return 0;
