@@ -37,12 +37,11 @@ Third-year Computer Engineering student , Chulalongkorn University
 ```
 * Add "C:\SFML-2.3\bin" to WINDOWS PATH
 
-* Then Open the project file [Tutor-SOM.cbp]
+* Then Open the project file using Code::Block [Tutor-SOM.cbp]
 * Here you go :D 
 
 ### Workflow
 
-![alt tag](https://raw.github.com/username/projectname/branch/path/to/img.png)
 
 * Normally , the test dataset is set to "iris.data" which is located on root directory of the project file.
 * There are some flag to set before compiling 
