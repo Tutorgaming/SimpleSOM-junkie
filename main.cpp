@@ -37,7 +37,7 @@ using namespace std;
 ==================================*/
     unsigned const int  ROW             = 15;
     unsigned const int  COL             = 15;
-    unsigned const int  MAX_ITERATION   = 25;
+    unsigned const int  MAX_ITERATION   = 250;
     double              MAX_radius      = max(ROW, COL)/2;
     const double        LEARNING_CONST  = 0.1;
     unsigned int        iteration_count = 0;
@@ -125,9 +125,8 @@ void randomdata(){
 void readfile_ucl(string filename){
     line_count = -1;
     element_count = 0;
-    cout << "==================="<<endl;
     cout << "READING FILE = "<< filename <<endl;
-    cout << "==================="<<endl;
+    cout << "-------------------"<<endl;
     string line,value;
     ifstream inputfile(filename);
 
@@ -145,7 +144,7 @@ void readfile_ucl(string filename){
         while(getline ( inputfile, line )){
             line_count++;
         }
-        cout << "   LINE COUNT = " << line_count <<endl;
+        cout << "   LINE COUNT    = " << line_count <<endl;
     }
     inputfile.close();
     inputfile.clear();
@@ -613,6 +612,9 @@ void sentMapToMSP(){
    @MAIN
 ================================================================*/
 int main(){
+    cout << "==================="<<endl;
+    cout << "Simple-SOM (Junkie-ai's solution) V1.0 Initialized ! "<<endl;
+    cout << "==================="<<endl;
     // Set display precision format on console
     cout << setprecision(5);
     cout << fixed;
@@ -655,7 +657,7 @@ int main(){
         sf::Thread thread(&drawWeightWindow);
         thread.launch();
 
-    cout << "PRESS TO START ! ";
+    cout << "PRESS ENTER TO START ! ";
     cin.ignore(); //Wait for Any key
 /*================================
    @TRAINING PROCESS
