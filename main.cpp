@@ -68,9 +68,9 @@ using namespace std;
    @FLAG
 ==================================*/
     int                 serial_flag     = 1; //Enable Serial
-    int                 finished        = 0;
-    int                 classy          = 0;
-    int                 num             = 0;
+    int                 finished        = 0; //Training Process Finished ? (Enable Mouse Click on visualizer)
+    int                 classy          = 0; //U-Matrix is ready to plot trained data
+   // int                 num             = 0;
     int                 plotty          = 0;
 /*==============================================================
    @FUNCTION
