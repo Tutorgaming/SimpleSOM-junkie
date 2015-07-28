@@ -47,6 +47,7 @@ using namespace std;
     int                 sizeMonitor     = 400;
     int                 margin          = ceil((double)sizeMonitor/(double)ROW);
     CSerial             serial;         //Serial interface
+    int                 serialEnable    = 0;
 /*================================
    @Data Structure
 ==================================*/
@@ -604,10 +605,31 @@ void sentMapToMSP(){
                     serial_sent_int(plotter[i][j]);
             }
         }
-
-
 }
 
+
+void serial_receive(){
+    int nBytesRead = 0,buf_idx =0,found = 0;
+    while(1){
+        if (serial.Open(4, 9600)&&serialEnable==1){
+             char* lpBuffer = new char[500];
+             char myrightBuffer[500];
+             while(found == 0){
+                nBytesRead = serial.ReadData(lpBuffer, 500);
+                char *start = strstr(lpBuffer, "R");
+                char *endptr = strstr(lpBuffer,"+");
+                if(start) {
+                        strncpy(myrightBuffer, start, endptr-start);
+                        break;
+                    }
+                }
+                    cout <<"[MSP430]>  "<< myrightBuffer << endl;
+                    serialEnable = 0;
+
+             delete []lpBuffer;
+            }
+    }
+}
 /*==============================================================
    @MAIN
 ================================================================*/
@@ -703,6 +725,7 @@ int main(){
     sf::Thread showdistance(&showDistance);
     showdistance.launch();
 
+
     //Classification on Training data [Using vector<vector<double>> real]
     // which is the data not shuffled
      for(int i = 0 ; i < line_count ; i++){
@@ -719,6 +742,9 @@ int main(){
     }else{
     cout << "==================="<<endl;
     }
+// Serial Thread
+    sf::Thread receiver(&serial_receive);
+    receiver.launch();
 
      // Set Class Drawing Flag (Draw on U-Matrix Window)
      // will draw the input data with the color R,G,B
@@ -738,14 +764,20 @@ int main(){
                 cout <<endl;
             }
 
+
             pair<int,int> result;
             result = findWinner(test_input);
             new_i = result.first;
             new_j = result.second;
-            cout << new_j << ","<<new_i << endl;
-            result = findClass(); // Find Reference From Training Data
-            plot_match_x = result.second; //J
-            plot_match_y = result.first; //I
+            cout <<"[desktop] location on map : "<< new_j << ","<<new_i << endl;
+            //Wait for Serial Response
+                serialEnable = 1;
+                while(serialEnable ==1);
+                cout <<endl;
+            //Find Class on Desktop [ plotter ]
+            result = findClass();
+            plot_match_x = result.second; //J [x to plot in drawing]
+            plot_match_y = result.first; //I [y to plot in drawing]
             plotty = 1;
         }
     }
