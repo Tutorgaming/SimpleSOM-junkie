@@ -623,12 +623,24 @@ void serial_receive(){
                         break;
                     }
                 }
-                    cout <<"[MSP430]>  "<< myrightBuffer << endl;
+                    cout <<"[MSP430]> "<< myrightBuffer << endl;
                     serialEnable = 0;
 
              delete []lpBuffer;
             }
     }
+}
+
+//Converter CSV to LibSVM format
+void printouttosvm(){
+        ofstream file;
+        file.open("normalized_data.data");
+        for(int i = 0 ; i < line_count ; i++){
+            file << class_number[real_class[i]] << " ";
+            for(int e = 0 ; e < element_count ; e++ ){
+                file <<e+1 << ":"<< real[i][e] << ((e==element_count-1)? "\n":" ");
+            }
+        }
 }
 /*==============================================================
    @MAIN
@@ -652,6 +664,7 @@ int main(){
     normalization(); //randomdata(); //RGB 3 Element Data
     //Compute the class name to numerical format ( Visualization Purpose )
     computeClassTag();
+
     //U-Matrix
     sf::Thread u_matrix(&drawUmatrix);
     u_matrix.launch();
@@ -769,17 +782,22 @@ int main(){
             result = findWinner(test_input);
             new_i = result.first;
             new_j = result.second;
-            cout <<"[desktop] location on map : "<< new_j << ","<<new_i << endl;
-            //Wait for Serial Response
-                serialEnable = 1;
-                while(serialEnable ==1);
-                cout <<endl;
+
+
             //Find Class on Desktop [ plotter ]
             result = findClass();
             plot_match_x = result.second; //J [x to plot in drawing]
             plot_match_y = result.first; //I [y to plot in drawing]
             plotty = 1;
+            cout << endl;
+            cout <<"[desktop] location on map : "<< new_j << ","<<new_i << endl;
+            cout <<"[desktop] Result : "<< plotter[plot_match_y][plot_match_x] << endl;
+            //Wait for Serial Response From MSP430
+                serialEnable = 1;
+                while(serialEnable ==1);
+                cout <<endl;
         }
+
     }
     cout << "==================="<<endl;
     cout <<endl << "CLOSE THREAD WINDOW TO EXIT" << "\r";
